@@ -77,13 +77,21 @@ function diet.item_eat(max)
 		end
 		
 		-- Increase health
-		local hp = user:get_hp()		
-		if (hp+points > 20) then
-			hp = 20
+		if minetest.get_modpath("hud") and hud then
+			local h = tonumber(hud.hunger[name])
+			h = h + points
+			if h>30 then h = 30 end
+			hud.hunger[name] = h
+			hud.save_hunger(user)
 		else
-			hp = hp + points
-		end		
-		user:set_hp(hp)
+			local hp = user:get_hp()		
+			if (hp+points > 20) then
+				hp = 20
+			else
+				hp = hp + points
+			end		
+			user:set_hp(hp)
+		end
 		
 		-- Register
 		diet.__register_eat(player,item,ftype)
