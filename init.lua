@@ -2,6 +2,27 @@ diet = {
 	players = {}
 }
 
+function diet.__init()
+	local file = io.open(minetest.get_worldpath().."/diet.txt", "r")
+	if file then
+		local table = minetest.deserialize(file:read("*all"))
+		if type(table) == "table" then
+			diet.players = table.players
+			return
+		end
+	end
+end
+
+function diet.save()
+	local file = io.open(minetest.get_worldpath().."/diet.txt", "w")
+	if file then
+		file:write(minetest.serialize({
+			players = diet.players
+		}))
+		file:close()
+	end
+end
+
 function diet.item_eat(max)	
 	return function(itemstack, user, pointed_thing)	
 		-- Process player data
@@ -67,6 +88,8 @@ function diet.item_eat(max)
 		-- Register
 		diet.__register_eat(player,item,ftype)
 		
+		diet.save()
+		
 		-- Remove item
 		itemstack:take_item()
 		return itemstack
@@ -85,6 +108,7 @@ function diet.__player(name)
 		name = name,
 		eaten = {}
 	}
+	diet.save()
 	return diet.players[name]
 end
 
@@ -95,3 +119,5 @@ function diet.__register_eat(player,food,type)
 		table.remove(player.eaten,1)
 	end
 end
+
+diet.__init()
