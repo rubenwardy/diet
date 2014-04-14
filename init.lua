@@ -307,3 +307,22 @@ if minetest.get_modpath("mobfcooking") ~= nil then
 	overwrite("mobfcooking:cooked_venison", 6)
 	overwrite("mobfcooking:cooked_fish", 6)
 end
+
+if minetest.get_modpath("ethereal") ~= nil then
+	overwrite("ethereal:strawberry", 1)
+	overwrite("ethereal:banana", 2)
+	overwrite("ethereal:pine_nuts", 1)
+	overwrite("ethereal:fern_tubers", 1)
+	overwrite("ethereal:banana_bread", 7)
+	overwrite("ethereal:mushroom_plant", 1)
+	overwrite("ethereal:coconut_slice", 2)
+	overwrite("ethereal:golden_apple", 10)
+	overwrite("ethereal:wild_onion_plant", 1)
+	overwrite("ethereal:mushroom_soup", 2)
+	overwrite("ethereal:mushroom_soup_cooked", 3)
+	overwrite("ethereal:hearty_stew", 4)
+	overwrite("ethereal:hearty_stew_cooked", 6)
+	overwrite("ethereal:bucket_cactus", 2)
+	overwrite("ethereal:fish_raw", 2)
+	overwrite("ethereal:fish_cooked", 4)
+end
