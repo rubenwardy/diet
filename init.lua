@@ -23,85 +23,127 @@ function diet.save()
 	end
 end
 
-function diet.item_eat(max)	
-	return function(itemstack, user, pointed_thing)	
-		-- Process player data
-		local name = user:get_player_name()
-		local player = diet.__player(name)
-		local item = itemstack:get_name()
-		
-		-- Get type
-		local ftype = ""
-		if (minetest.registered_items[item] and minetest.registered_items[item].groups) then
-			local groups = minetest.registered_items[item].groups
-			if groups.food_type_meal then
-				ftype = "meal"
-			elseif groups.food_type_snack then
-				ftype = "snack"
-			elseif groups.food_type_dessert then
-				ftype = "dessert"
-			elseif groups.food_type_drink then
-				ftype = "drink"
-			end
-		end
-		
-		-- Calculate points
-		local points = max
-		if (#player.eaten>0) then
-			local same_food = 0
-			local same_type = 0
-			for _,v in pairs(player.eaten) do
-				if v[1] == item then
-					same_food = same_food + 1
-				end
-				if v[2] == ftype then
-					same_type = same_type + 1
-				end
-			end
-			local mult = same_food/10
-			points = points * 1-mult
-			
-			if (mult > 0.9) then
-				local desc = item
-				if (minetest.registered_items[item] and minetest.registered_items[item].description) then
-					desc = minetest.registered_items[item].description
-				end
-				minetest.chat_send_player(name,"Your stomach hates "..desc)
-			elseif (mult > 0.4) then
-				minetest.chat_send_player(name,"Your stomach could do with a change.")
-			end
-			if points > max then
-				error("[DIET] This shouldn't happen! points > max")
-				return
-			end
-		end
-		
-		-- Increase health
-		if minetest.get_modpath("hud") and hud then
-			local h = tonumber(hud.hunger[name])
-			h = h + points
-			if h>30 then h = 30 end
-			hud.hunger[name] = h
-			hud.save_hunger(user)
-		else
-			local hp = user:get_hp()		
-			if (hp+points > 20) then
-				hp = 20
-			else
-				hp = hp + points
-			end		
-			user:set_hp(hp)
-		end
-		
-		-- Register
-		diet.__register_eat(player,item,ftype)
-		
-		diet.save()
-		
-		-- Remove item
-		itemstack:take_item()
-		return itemstack
-	end
+-- Poison player
+local function poisenp(tick, time, time_left, player)
+   time_left = time_left + tick
+   if time_left < time then
+      minetest.after(tick, poisenp, tick, time, time_left, player)
+   else
+      --reset hud image
+   end
+   if player:get_hp()-1 > 0 then
+      player:set_hp(player:get_hp()-1)
+   end
+   
+end
+
+
+function diet.item_eat(max, replace_with_item, poisen, heal)
+   return function(itemstack, user, pointed_thing)
+      
+      -- Process player data
+      local name = user:get_player_name()
+      local player = diet.__player(name)
+      local item = itemstack:get_name()
+
+      -- Get type
+      local ftype = ""
+      if (minetest.registered_items[item] and minetest.registered_items[item].groups) then
+	 local groups = minetest.registered_items[item].groups
+	 if groups.food_type_meal then
+	    ftype = "meal"
+	 elseif groups.food_type_snack then
+	    ftype = "snack"
+	 elseif groups.food_type_dessert then
+	    ftype = "dessert"
+	 elseif groups.food_type_drink then
+	    ftype = "drink"
+	 end
+      end
+
+      -- Calculate points
+      local points = max
+      if (#player.eaten>0) then
+	 local same_food = 0
+	 local same_type = 0
+	 for _,v in pairs(player.eaten) do
+	    if v[1] == item then
+	       same_food = same_food + 1
+	    end
+	    if v[2] == ftype then
+	       same_type = same_type + 1
+	    end
+	 end
+	 local mult = same_food/10
+	 points = points * 1-mult
+	 
+	 if (mult > 0.9) then
+	    local desc = item
+	    if (minetest.registered_items[item] and minetest.registered_items[item].description) then
+	       desc = minetest.registered_items[item].description
+	    end
+	    minetest.chat_send_player(name,"Your stomach hates "..desc)
+	 elseif (mult > 0.4) then
+	    minetest.chat_send_player(name,"Your stomach could do with a change.")
+	 end
+	 if points > max then
+	    error("[DIET] This shouldn't happen! points > max")
+	    return
+	 end
+      end
+
+      -- Increase health
+      if minetest.get_modpath("hbhunger") and hbhunger then
+	 minetest.sound_play({name = "hbhunger_eat_generic", gain = 1}, {pos=user:getpos(), max_hear_distance = 16})
+
+	 -- saturation
+	 local h = tonumber(hbhunger.hunger[name])
+	 h = h + points
+
+	 if h > 30 then h = 30 end
+	 hbhunger.hunger[name] = h
+	 hbhunger.set_hunger(user)
+
+	 -- healing
+	 local hp = user:get_hp()
+	 if hp < 20 and heal then
+	    hp = hp + heal
+	    if hp > 20 then hp = 20 end
+	    user:set_hp(hp)
+	 end
+
+	 -- Poison
+	 if poisen then
+	    --set hud-img
+	    poisenp(1.0, poisen, 0, user)
+	 end
+	 
+      elseif minetest.get_modpath("hunger") and hunger then
+	 local h = tonumber(hunger.players[name].lvl)
+	 h = h + points
+	 hunger.update_hunger(user, h)
+
+      else
+	 local hp = user:get_hp()		
+	 if (hp+points > 20) then
+	    hp = 20
+	 else
+	    hp = hp + points
+	 end		
+	 user:set_hp(hp)
+      end
+      
+      -- Register
+      diet.__register_eat(player,item,ftype)
+      
+      diet.save()
+      
+      -- Remove item
+      itemstack:add_item(replace_with_item)
+      itemstack:take_item()
+      return itemstack
+   end
+   
 end
 
 function diet.__player(name)
@@ -128,12 +170,12 @@ function diet.__register_eat(player,food,type)
 	end
 end
 
-local function overwrite(name, amt)
+local function overwrite(name, hunger_change, replace_with_item, poisen, heal)
 	local tab = minetest.registered_items[name]
 	if not tab then
 		return
 	end
-	tab.on_use = diet.item_eat(amt)
+	tab.on_use = diet.item_eat(hunger_change, replace_with_item, poisen, heal)
 end
 
 diet.__init()
