@@ -120,6 +120,14 @@ function diet.item_eat(max, replace_with_item, poisen, heal)
 			local h = tonumber(hunger.players[name].lvl)
 			h = h + points
 			hunger.update_hunger(user, h)
+			
+		elseif minetest.get_modpath("hud") and hud and hud.hunger then
+			local h = tonumber(hud.hunger[name])
+			h = h + points
+			if h > 30 then h = 30 end
+			hud.hunger[name] = h
+			hud.save_hunger(user)
+
 		else
 			local hp = user:get_hp()		
 			if (hp+points > 20) then
