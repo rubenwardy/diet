@@ -23,13 +23,28 @@ function diet.save()
 	end
 end
 
-function diet.item_eat(max)	
-	return function(itemstack, user, pointed_thing)	
+-- Poison player
+local function poisenp(tick, time, time_left, player)
+	time_left = time_left + tick
+	if time_left < time then
+		minetest.after(tick, poisenp, tick, time, time_left, player)
+	else
+		--reset hud image
+	end
+	if player:get_hp()-1 > 0 then
+		player:set_hp(player:get_hp()-1)
+	end
+
+end
+
+function diet.item_eat(max, replace_with_item, poisen, heal)
+	return function(itemstack, user, pointed_thing)
+
 		-- Process player data
 		local name = user:get_player_name()
 		local player = diet.__player(name)
 		local item = itemstack:get_name()
-		
+
 		-- Get type
 		local ftype = ""
 		if (minetest.registered_items[item] and minetest.registered_items[item].groups) then
@@ -44,7 +59,7 @@ function diet.item_eat(max)
 				ftype = "drink"
 			end
 		end
-		
+
 		-- Calculate points
 		local points = max
 		if (#player.eaten>0) then
@@ -60,7 +75,7 @@ function diet.item_eat(max)
 			end
 			local mult = same_food/10
 			points = points * 1-mult
-			
+	 
 			if (mult > 0.9) then
 				local desc = item
 				if (minetest.registered_items[item] and minetest.registered_items[item].description) then
@@ -75,14 +90,44 @@ function diet.item_eat(max)
 				return
 			end
 		end
-		
+
 		-- Increase health
-		if minetest.get_modpath("hud") and hud then
+		if minetest.get_modpath("hbhunger") and hbhunger then
+			minetest.sound_play({name = "hbhunger_eat_generic", gain = 1}, {pos=user:getpos(), max_hear_distance = 16})
+
+			-- saturation
+			local h = tonumber(hbhunger.hunger[name])
+			h = h + points
+			if h > 30 then h = 30 end
+			hbhunger.hunger[name] = h
+			hbhunger.set_hunger(user)
+
+			-- healing
+			local hp = user:get_hp()
+			if hp < 20 and heal then
+				hp = hp + heal
+				if hp > 20 then hp = 20 end
+				user:set_hp(hp)
+			end
+
+			 -- Poison
+			if poisen then
+				--set hud-img
+				poisenp(1.0, poisen, 0, user)
+			end
+	 
+		elseif minetest.get_modpath("hunger") and hunger then
+			local h = tonumber(hunger.players[name].lvl)
+			h = h + points
+			hunger.update_hunger(user, h)
+			
+		elseif minetest.get_modpath("hud") and hud and hud.hunger then
 			local h = tonumber(hud.hunger[name])
 			h = h + points
-			if h>30 then h = 30 end
+			if h > 30 then h = 30 end
 			hud.hunger[name] = h
 			hud.save_hunger(user)
+
 		else
 			local hp = user:get_hp()		
 			if (hp+points > 20) then
@@ -92,17 +137,18 @@ function diet.item_eat(max)
 			end		
 			user:set_hp(hp)
 		end
-		
+
 		-- Register
 		diet.__register_eat(player,item,ftype)
-		
+
 		diet.save()
-		
+
 		-- Remove item
+		itemstack:add_item(replace_with_item)
 		itemstack:take_item()
 		return itemstack
 	end
-end
+end	
 
 function diet.__player(name)
 	if name == "" then
@@ -128,12 +174,12 @@ function diet.__register_eat(player,food,type)
 	end
 end
 
-local function overwrite(name, amt)
+local function overwrite(name, hunger_change, replace_with_item, poisen, heal)
 	local tab = minetest.registered_items[name]
 	if not tab then
 		return
 	end
-	tab.on_use = diet.item_eat(amt)
+	tab.on_use = diet.item_eat(hunger_change, replace_with_item, poisen, heal)
 end
 
 diet.__init()
@@ -223,7 +269,7 @@ end
 if minetest.get_modpath("bushes_classic") then
 	-- bushes_classic mod, as found in the plantlife modpack
 	local berries = {
-	    "strawberry",
+		"strawberry",
 		"blackberry",
 		"blueberry",
 		"raspberry",
@@ -397,7 +443,7 @@ if minetest.get_modpath("kpgmobs") ~= nil then
 	overwrite("kpgmobs:meat", 6)
 	overwrite("kpgmobs:rat_cooked", 5)
 	overwrite("kpgmobs:med_cooked", 4)
-  	if minetest.get_modpath("bucket") then
+	if minetest.get_modpath("bucket") then
 	   overwrite("kpgmobs:bucket_milk", 4, "bucket:bucket_empty")
 	end
 end
