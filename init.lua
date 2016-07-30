@@ -281,6 +281,7 @@ if minetest.get_modpath("bushes_classic") then
 		end
 		overwrite("bushes:"..berry.."_pie_raw", 2)
 		overwrite("bushes:"..berry.."_pie_cooked", 5)
+		overwrite("bushes:"..berry.."_pie_slice", 1)
 		overwrite("bushes:basket_"..berry, 15)
 	end
 end
