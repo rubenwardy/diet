@@ -1,3 +1,7 @@
+-- Load support for intllib.
+local MP = minetest.get_modpath(minetest.get_current_modname())
+local S, NS = dofile(MP.."/intllib.lua")
+
 diet = {
 	players = {}
 }
@@ -81,12 +85,12 @@ function diet.item_eat(max, replace_with_item, poisen, heal)
 				if (minetest.registered_items[item] and minetest.registered_items[item].description) then
 					desc = minetest.registered_items[item].description
 				end
-				minetest.chat_send_player(name,"Your stomach hates "..desc)
+				minetest.chat_send_player(name,S("Your stomach hates ")..desc)
 			elseif (mult > 0.4) then
-				minetest.chat_send_player(name,"Your stomach could do with a change.")
+				minetest.chat_send_player(name,S("Your stomach could do with a change."))
 			end
 			if points > max then
-				error("[DIET] This shouldn't happen! points > max")
+				error("[DIET] " .. S("This shouldn't happen! points > max"))
 				return
 			end
 		end
