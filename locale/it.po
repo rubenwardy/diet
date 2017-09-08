@@ -1,0 +1,31 @@
+# ITALIAN LOCALE FILE FOR THE DIET MODULE.
+# Copyright (C) 2017 rubenwardy https://rubenwardy.com/
+# This file is distributed under the same license as the DIET package.
+# Hamlet <h4mlet@riseup.net>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Diet 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-09-08 13:00+0200\n"
+"PO-Revision-Date: 2017-09-08 13:03+0100\n"
+"Last-Translator: H4mlet <h4mlet@riseup.net>\n"
+"Language-Team: \n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.6.10\n"
+
+#: init.lua
+msgid "Your stomach hates "
+msgstr "Il tuo stomaco odia "
+
+#: init.lua
+msgid "Your stomach could do with a change."
+msgstr "Al tuo stomaco andrebbe un cambiamento."
+
+#: init.lua
+msgid "This shouldn't happen! points > max"
+msgstr "Questo non dovrebbe succedere! punti > max"
